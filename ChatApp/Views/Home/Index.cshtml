@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/microsoft-signalr/signalr.min.js"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="bg-light shadow rounded-3 p-4">
+                    <h4 class="text-center mb-4">Chat Room</h4>
+                    <div id="messagesList" class="mb-3 border-bottom overflow-auto" style="height: 300px;"></div>
+                    <div class="input-group">
+                        <input type="text" id="userInput" placeholder="User Name" aria-label="User Name" class="form-control rounded-0 rounded-start">
+                        <input type="text" id="messageInput" placeholder="Write a message..." aria-label="Message" class="form-control rounded-0">
+                        <button onclick="sendMessage()" class="btn btn-outline-secondary rounded-0 rounded-end">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        connection.on("ReceiveMessage", function (user, message) {
+            const msgElement = document.createElement("div");
+            msgElement.className = "p-2 mb-1 bg-white border rounded";
+            msgElement.textContent = user + ": " + message;
+            document.getElementById("messagesList").appendChild(msgElement);
+            document.getElementById("messagesList").scrollTop = document.getElementById("messagesList").scrollHeight;
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        function sendMessage() {
+            const user = document.getElementById("userInput").value;
+            const message = document.getElementById("messageInput").value;
+            connection.invoke("SendMessage", user, message).catch(function (err) {
+                return console.error(err.toString());
+            });
+            document.getElementById("messageInput").value = ''; // clear input field after sending
+        }
+    </script>
+</body>
+</html>
